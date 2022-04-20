@@ -25,8 +25,16 @@ void print_set(Set *set);
 bool contains(Set *set, int item);
 void delete (Set *set, int item);
 
+pthread_mutex_t lock;
+
 int main()
 {
+  if (pthread_mutex_init(&lock, NULL))
+  {
+    printf("Mutext failed to init\n");
+    return 1;
+  }
+
   pthread_t thread_id[100];
   arg_t *args[100];
   Set *set1 = init();
@@ -45,6 +53,8 @@ int main()
   {
     pthread_join(thread_id[i], NULL);
   }
+
+  pthread_mutex_destroy(&lock);
 
   print_set(set1);
 
@@ -70,9 +80,11 @@ bool is_empty(Set *set)
 // Insert element into set
 void insert(void *arguments)
 {
-  arg_t *args = (arg_t *) arguments;
+  arg_t *args = (arg_t *)arguments;
   int item = args->value;
   Set *set = args->set;
+
+  pthread_mutex_lock(&lock);
 
   if (!contains(set, item))
   {
@@ -80,6 +92,8 @@ void insert(void *arguments)
     set->items[set->length] = item;
     set->length++;
   }
+
+  pthread_mutex_unlock(&lock);
 }
 
 // Print set
